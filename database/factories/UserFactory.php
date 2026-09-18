@@ -5,7 +5,6 @@ namespace Database\Factories;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 /**
  * @extends Factory<User>
@@ -25,11 +24,13 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => fake()->name(),
-            'email' => fake()->unique()->safeEmail(),
-            'email_verified_at' => now(),
+            'first_name' => fake()->firstName(),
+            'last_name' => fake()->lastName(),
+            'mobile' => '+989'.fake()->unique()->numerify('#########'),
+            'username' => fake()->unique()->userName(),
+            'national_code' => $this->nationalCode(),
+            'mobile_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
-            'remember_token' => Str::random(10),
             'two_factor_secret' => null,
             'two_factor_recovery_codes' => null,
             'two_factor_confirmed_at' => null,
@@ -37,13 +38,31 @@ class UserFactory extends Factory
     }
 
     /**
-     * Indicate that the model's email address should be unverified.
+     * Indicate that the model's mobile number should be unverified.
      */
     public function unverified(): static
     {
         return $this->state(fn (array $attributes) => [
-            'email_verified_at' => null,
+            'mobile_verified_at' => null,
         ]);
+    }
+
+    private function nationalCode(): string
+    {
+        do {
+            $digits = str_split(fake()->unique()->numerify('#########'));
+        } while (count(array_unique($digits)) === 1);
+
+        $sum = 0;
+
+        foreach ($digits as $index => $digit) {
+            $sum += ((int) $digit) * (10 - $index);
+        }
+
+        $remainder = $sum % 11;
+        $checkDigit = $remainder < 2 ? $remainder : 11 - $remainder;
+
+        return implode('', $digits).$checkDigit;
     }
 
     /**
